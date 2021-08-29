@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libpq-fe.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -19,9 +20,21 @@ void infoProfesores();
 void infoCursos();
 void infoCursosPorPeriodo();
 
+//Funciones del submenu general
+void consultaXdia();
+void consultaXaula();
+void consultaXcurso();
+
+
+// Compilar: gcc main.c -o main -I /usr/include/postgresql -lpq -std=c99
+
+
 
 int main(){
+
+
         menuPrincipal();
+        
         return 0;
 }
 
@@ -37,7 +50,7 @@ int menuPrincipal() {
         printf( "\n1. Opciones Operativas");
         printf( "\n2. Opciones Generales");
         printf( "\n3. Salir");
-        printf( "\n\nIntroduzca opciocn (1-3): ");
+        printf( "\n\nIntroduzca una opcion (1-3): ");
 
         fgets(temp,10,stdin);
         opcion = atoi(temp);
@@ -307,7 +320,7 @@ int menuGeneral() {
         printf( "\n2. Consulta por aula");
         printf( "\n3. Consulta por curso");
         printf( "\n4. Salir");
-        printf( "\n\nIntroduzca opciocn (1-4): ");
+        printf( "\n\nIntroduzca una opcion (1-4): ");
 
         fgets(temp,10,stdin);
         opcion = atoi(temp);
@@ -315,11 +328,11 @@ int menuGeneral() {
 
         switch ( opcion )
         {
-            case 1: 
+            case 1: consultaXdia();
                     break;
-            case 2: 
+            case 2: consultaXaula();
                     break;
-            case 3: 
+            case 3: consultaXcurso();
                     break;
          }
 
@@ -327,4 +340,110 @@ int menuGeneral() {
     return 0;
 
 
+}
+
+void consultaXdia() {
+        PGconn *conn =  PQconnectdb("dbname=prueba host=localhost user=me password=password");
+        printf("Ingrese la fecha a consultar: ");
+        char * fecha = getString();
+        const char *  paramValues[1];
+     
+        paramValues[0] = fecha;
+        
+        char *stm = "SELECT a.nombre, r.reservacionid, cp.annio, cp.periodo, cp.codigoCurso, cp.grupo, r.horaInicio, r.horaFin FROM aulas a INNER JOIN reservacion r on r.aulaid = a.nombre INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE r.fecha = $1";
+        PGresult *res = PQexecParams(conn, stm, 1, NULL, paramValues, NULL, NULL, 0);   
+        int rows = PQntuples(res);
+        if(rows< 1){
+                printf("\n      No hay ninguna aula reservada para esa fecha\n");
+                return;
+        } 
+        printf("\n       CONSULTAS POR DIA - %s\n",fecha);
+        printf("Aula ID Año Periodo Codigo Grupo Inicio Fin\n");
+        for (int i=0; i<rows; i++) {
+                printf("%s  %s  %s  %s  %s  %s  %s  %s\n", PQgetvalue(res, i, 0), 
+            PQgetvalue(res, i, 1), PQgetvalue(res, i, 2),
+            PQgetvalue(res, i, 3), PQgetvalue(res, i, 4),
+            PQgetvalue(res, i, 5), PQgetvalue(res, i, 6),
+            PQgetvalue(res, i, 7));
+        }
+
+        PQfinish(conn);
+}
+
+void consultaXaula() {
+
+        PGconn *conn =  PQconnectdb("dbname=prueba host=localhost user=me password=password");
+        printf("Ingrese el nombre del aula a consultar: ");
+
+        char nombreAula[255];
+        scanf(" %s",&nombreAula[0]);
+        while(getchar() != '\n');
+        const char *  paramValues[1];
+     
+        paramValues[0] = nombreAula;
+
+        char *stm = "SELECT r.Fecha, r.horaInicio, r.horaFin, r.reservacionid, cp.annio, cp.periodo, cp.codigoCurso, cp.grupo FROM aulas a INNER JOIN reservacion r on r.aulaid = a.nombre INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE a.nombre = $1 ORDER BY r.Fecha";
+        PGresult *res = PQexecParams(conn, stm, 1, NULL, paramValues, NULL, NULL, 0);   
+        int rows = PQntuples(res);
+        if(rows< 1){
+                printf("\n      No hay %s\n",nombreAula);
+                return;
+        } 
+
+        printf("\n        -={ Consulta por Aula:%s }=-\n",nombreAula);
+        for (int i=0; i<rows; i++) {
+                printf("%s  %s  %s  %s  %s  %s  %s  %s\n", PQgetvalue(res, i, 0), 
+            PQgetvalue(res, i, 1), PQgetvalue(res, i, 2),
+            PQgetvalue(res, i, 3), PQgetvalue(res, i, 4),
+            PQgetvalue(res, i, 5), PQgetvalue(res, i, 6),
+            PQgetvalue(res, i, 7));
+        }
+
+        PQfinish(conn);
+        return;
+}
+
+void consultaXcurso() {
+
+        PGconn *conn =  PQconnectdb("dbname=prueba host=localhost user=me password=password");
+        
+        printf("Ingrese el año a consultar: ");
+        char annio[255];
+        scanf("%s",&annio[0]);
+
+        printf("Ingrese el periodo a consultar: ");
+        char periodo[255];
+        scanf("%s",&periodo[0]);
+        
+        printf("Ingrese el codigo de curso a consultar: ");
+        char cod[255];
+        scanf("%s",&cod[0]);
+
+        printf("Ingrese el grupo a consultar: ");
+        char grupo[255];
+        scanf("%s",&grupo[0]);
+        while(getchar() != '\n');
+        
+        const char *  paramValues[4];
+     
+        paramValues[0] = annio;
+        paramValues[1] = periodo;
+        paramValues[2] = cod;
+        paramValues[3] = grupo;
+        
+        char *stm = "SELECT cp.codigoCurso, r.Fecha, r.horaInicio, r.horaFin, a.Nombre FROM aulas a INNER JOIN reservacion r on r.aulaid = a.nombre INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE cp.annio = $1 and  cp.periodo = $2 and cp.codigoCurso = $3 and cp.grupo = $4 ORDER BY r.Fecha, r.horaInicio, a.Nombre";
+        PGresult *res = PQexecParams(conn, stm, 4, NULL, paramValues, NULL, NULL, 0);   
+        int rows = PQntuples(res);
+        if(rows< 1){
+                printf("\n      No hay ningun curso reservado con esos datos\n");
+                return;
+        } 
+        printf("\n       -={ Consulta por Curso }=-\n");
+        for (int i=0; i<rows; i++) {
+                printf("%s  %s  %s  %s  %s\n", PQgetvalue(res, i, 0), 
+            PQgetvalue(res, i, 1), PQgetvalue(res, i, 2),
+            PQgetvalue(res, i, 3), PQgetvalue(res, i, 4));
+        }
+
+        PQfinish(conn);
 }
