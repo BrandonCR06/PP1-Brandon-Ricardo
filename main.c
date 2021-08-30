@@ -350,7 +350,7 @@ void consultaXdia() {
      
         paramValues[0] = fecha;
         
-        char *stm = "SELECT a.nombre, r.reservacionid, cp.annio, cp.periodo, cp.codigoCurso, cp.grupo, r.horaInicio, r.horaFin FROM aulas a INNER JOIN reservacion r on r.aulaid = a.nombre INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE r.fecha = $1";
+        char *stm = "SELECT a.nombre, r.reservacionid, cp.annio, cp.periodo, cp.codigoCurso, cp.grupo, r.horaInicio, r.horaFin FROM aulas a INNER JOIN reservacionesxaula ra on ra.aulaid = a.nombre  INNER JOIN reservacion r on r.reservacionid = ra.reservacionid INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE r.fecha = $1";
         PGresult *res = PQexecParams(conn, stm, 1, NULL, paramValues, NULL, NULL, 0);   
         int rows = PQntuples(res);
         if(rows< 1){
@@ -382,7 +382,7 @@ void consultaXaula() {
      
         paramValues[0] = nombreAula;
 
-        char *stm = "SELECT r.Fecha, r.horaInicio, r.horaFin, r.reservacionid, cp.annio, cp.periodo, cp.codigoCurso, cp.grupo FROM aulas a INNER JOIN reservacion r on r.aulaid = a.nombre INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE a.nombre = $1 ORDER BY r.Fecha";
+        char *stm = "SELECT r.Fecha, r.horaInicio, r.horaFin, r.reservacionid, cp.annio, cp.periodo, cp.codigoCurso, cp.grupo FROM aulas a INNER JOIN reservacionesxaula ra on ra.aulaid = a.nombre  INNER JOIN reservacion r on r.reservacionid = ra.reservacionid INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE a.nombre = $1 ORDER BY r.Fecha";
         PGresult *res = PQexecParams(conn, stm, 1, NULL, paramValues, NULL, NULL, 0);   
         int rows = PQntuples(res);
         if(rows< 1){
@@ -431,7 +431,7 @@ void consultaXcurso() {
         paramValues[2] = cod;
         paramValues[3] = grupo;
         
-        char *stm = "SELECT cp.codigoCurso, r.Fecha, r.horaInicio, r.horaFin, a.Nombre FROM aulas a INNER JOIN reservacion r on r.aulaid = a.nombre INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE cp.annio = $1 and  cp.periodo = $2 and cp.codigoCurso = $3 and cp.grupo = $4 ORDER BY r.Fecha, r.horaInicio, a.Nombre";
+        char *stm = "SELECT cp.codigoCurso, r.Fecha, r.horaInicio, r.horaFin, a.Nombre FROM aulas a INNER JOIN reservacionesxaula ra on ra.aulaid = a.nombre  INNER JOIN reservacion r on r.reservacionid = ra.reservacionid INNER JOIN cursosxperiodo cp on cp.cursoxperiodoid = r.cursoxperiodo WHERE cp.annio = $1 and  cp.periodo = $2 and cp.codigoCurso = $3 and cp.grupo = $4 ORDER BY r.Fecha, r.horaInicio, a.Nombre";
         PGresult *res = PQexecParams(conn, stm, 4, NULL, paramValues, NULL, NULL, 0);   
         int rows = PQntuples(res);
         if(rows< 1){
