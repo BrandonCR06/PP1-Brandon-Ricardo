@@ -4,6 +4,7 @@
 #define TRUE 1
 #define FALSE 0
 #define endl printf("\n")
+
 //Prototipos de las funciones
 void menuPrincipal();
 void menuOperativo();
@@ -19,6 +20,9 @@ struct cadena{
      char** lista;
      int tamanio;
 };
+PGconn *conn;
+
+
 
 int count(char car[] ){
       char* mem = car;
@@ -74,17 +78,16 @@ struct cadena split(char car[],char splitArg){
      
      retorno = (char**)realloc(retorno,sizeof(char*)*j);               
      retorno[j-1] = tmp;   
-     struct cadena cad = {retorno,j};
-     for(int i = 0 ; i < j; i++){
-          imprime(retorno[i]);
-          endl;
-     }
+     struct cadena cad = {retorno,j};     
      return cad;
      
      
 }
 
+
 int main(){
+          
+          conn= PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
         menuPrincipal();
         return 0;
 }
@@ -133,8 +136,7 @@ void incluirProfes(){
      char nombre[255];
      getchar();     
      scanf("%s",&nombre[0]);
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-     const char *  paramValues[2];
+          const char *  paramValues[2];
      paramValues[0]= cedula;
      paramValues[1]= nombre;          
      //char * hola = PQgetvalue(res, 0, 1);
@@ -144,29 +146,33 @@ void incluirProfes(){
                fprintf(stderr, " Error: %s\n",PQerrorMessage(conn));
 
      }
-     PQfinish(conn);
-
+     
                
 
 }
      
 void borrarProfes(){
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-     printf("Ingrese la cedula del profesor a borrar: ");
+          printf("Ingrese la cedula del profesor a borrar: ");
      char cedula[255];
      
      getchar();     
      scanf("%s",&cedula[0]);
      const char *  paramValues[1];
      paramValues[0]= cedula;
+     char * stm1= "select profesores.cedula from cursosxperiodo inner join profesores on profesores.cedula = cursosxperiodo.profesorid where cedula = $1";
+     PGresult* res = PQexecParams(conn, stm1, 1, NULL, paramValues, NULL, NULL, 0); 
+     int rows = PQntuples(res);
+     if(rows> 0 ){
+          printf("Ese profesor tiene asociado algun curso por periodo, no puede eliminarse");
+          return; 
+     }
      char *stm = "delete from profesores where cedula = $1";
-     PGresult *res = PQexecParams(conn, stm, 1, NULL, paramValues, NULL, NULL, 0);    
-     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+     PGresult *res1= PQexecParams(conn, stm, 1, NULL, paramValues, NULL, NULL, 0);    
+     if (PQresultStatus(res1) != PGRES_COMMAND_OK) {
                fprintf(stderr, " Error: %s\n",PQerrorMessage(conn));
 
      }
-     PQfinish(conn);
-
+     
      
 }
 
@@ -190,8 +196,7 @@ void imprimeQuery(char* stm ,int cantCol){
      
 }
 void listarProfes(){
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-     PGresult *res = PQexec(conn, "SELECT cedula,nombre FROM profesores");    
+          PGresult *res = PQexec(conn, "SELECT cedula,nombre FROM profesores");    
      int rows = PQntuples(res);
     
      for(int i=0; i<rows; i++) {
@@ -199,8 +204,7 @@ void listarProfes(){
           printf("  %s--%s\n", PQgetvalue(res, i, 0), 
           PQgetvalue(res, i, 1));
      }    
-     PQfinish(conn);
-
+     
 }
 
 void infoProfes(){
@@ -250,14 +254,6 @@ void infoAulas() {
      
      scanf("%s",&archivo[0]);
 
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-     
-
-     if (PQstatus(conn) == CONNECTION_BAD) {
-          fprintf(stderr, "Connection to database failed: %s\n",PQerrorMessage(conn));
-        
-    }
-
     int ver = PQserverVersion(conn);
     printf("%s",archivo);
 
@@ -286,7 +282,7 @@ void infoAulas() {
 
     }            
     fclose(filepointer);    
-    //imprime(tmp);    
+
     struct cadena cad = split(tmp,10);
     
     char** splitedValue = cad.lista;
@@ -311,8 +307,7 @@ void infoAulas() {
            
      }    
      
-     PQfinish(conn);
-               
+                    
           
         
 
@@ -326,7 +321,6 @@ void infoAulas() {
 
 
 void incluirCursosxPeriodo(){
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
      printf("Ingrese el codigo de curso: ");
      char codigo[255];
      getchar();     
@@ -395,16 +389,14 @@ void incluirCursosxPeriodo(){
      char *stm = "Insert into cursosxperiodo values (default,$1,$2,$3,$4,$5,$6)";     
      PGresult *res = PQexecParams(conn, stm, 6, NULL, paramValues, NULL, NULL, 0);       
      if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-               fprintf(stderr, " Error: %s\n",PQerrorMessage(conn));
+               fprintf(stderr, " Error: %s\n","Error a la hora de insertar los datos, verifique no se encuentre repetido algun valor de unicidad");
 
      }
-     PQfinish(conn);
-
+     
 }
 // Permite realizar la reservación de aulas en el sistema 
 void infoReservas(){
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-     printf( "\n   -==[Reservacion de aulas]==-");     
+          printf( "\n   -==[Reservacion de aulas]==-");     
      printf( "\n Ingrese el codigo de curso: ");  
      char codigo[255];
      getchar();     
@@ -448,11 +440,11 @@ void infoReservas(){
 
 
 
-     printf( "\n Ingrese la hora de inicio ");    
+     printf( "\n Ingrese la hora de inicio (hh:mm) ");    
       char finicio[255];
      getchar();     
      scanf("%s",&finicio[0]);      
-     printf( "\n Ingrese la hora de fin ");     
+     printf( "\n Ingrese la hora de fin (hh:mm) ");     
       char ffin[255];
      getchar();     
      scanf("%s",&ffin[0]) ;
@@ -483,17 +475,13 @@ void infoReservas(){
                break;
           }
           sumatoriaCapacidad+=atoi(PQgetvalue(resAulas, 0, 1));
-
-           if (PQresultStatus(resAulas) != PGRES_COMMAND_OK) {
-               fprintf(stderr, " Error: %s\n",PQerrorMessage(conn));
-               //return;
-               //break;
-
-           } 
-          char *  queryHorarios = "select aulaid from  reservacionxaula where reservacion.horainicio between $1"
-          "and $2 or reservacion.horafin between $1 and $2 and $1 between reservacion.horaInicio and" 
-          "reservacion.horaFin or $2 between horaInicio and horaFin and aulaid = $3"
-          "inner join reservacion on reservacionxaula.reservacionid = reservacion.reservacionid";
+           
+          char *  queryHorarios = "select reservacionxaula.aulaid from("
+     " select reservacionid from  reservacion where reservacion.horainicio between $1"
+     " and $2 or reservacion.horafin between $1 and $2 and $1 between reservacion.horaInicio and"
+     " reservacion.horaFin or $2 between horaInicio and horaFin) as g"
+     " inner join reservacionxaula on g.reservacionid = reservacionxaula.reservacionid"
+     " where reservacionxaula.aulaid = $3";
           const char * paramValuesHorarios[3];
           paramValuesHorarios[0] = finicio;
           paramValuesHorarios[1] = ffin;
@@ -538,8 +526,7 @@ void infoReservas(){
 }
 void cancelacionReserva(){
 
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-     printf( "\n Ingrese el identificador de la reserva ");    
+          printf( "\n Ingrese el identificador de la reserva ");    
      
       char idReserva1[255];
       getchar();     
@@ -581,6 +568,56 @@ void listarCursosxPeriodo(){
      imprimeQuery(stm,7);     
 
 }
+
+void borrarCursoxPeriodo(){
+     printf("Ingrese el codigo de curso: ");
+     char codigo[255];
+     
+     scanf("%s",&codigo[0]);
+     printf("Ingrese el periodo de curso: ");
+     char period[255];
+     
+     scanf("%s",&period[0]);
+     printf("Ingrese el grupo de curso: ");
+     char grupo[255];
+     
+     scanf("%s",&grupo[0]);
+     printf("Ingrese el annio de curso: ");
+     char annio[255];
+     
+     scanf("%s",&annio[0]);
+     
+
+     char *stmCursoxperiodo = "delete from cursosxperiodo where codigocurso = $1 and periodo = $2 and annio = $3 and grupo = $4";                    
+
+     const char *  paramValues[4];
+     
+     paramValues[0] = codigo;
+     paramValues[1] = period;
+     paramValues[2] =annio;
+     paramValues[3] = grupo;
+     char *stmCrselect = "select codigocurso,periodo,annio,grupo from ("
+     " select cursosxperiodo.codigocurso, cursosxperiodo.periodo,cursosxperiodo.annio,cursosxperiodo.grupo"
+     " from reservacion inner join cursosxperiodo on cursosxperiodo.cursoxperiodoid = reservacion.cursoxperiodo"
+     " ) as g where g.codigocurso = $1 and g.periodo = $2 and g.annio = $3 and g.grupo = $4";
+
+     PGresult *resValid = PQexecParams(conn, stmCrselect, 4, NULL, paramValues, NULL, NULL, 0);   
+     int rowsCursoxPriodo = PQntuples(resValid);
+     if(rowsCursoxPriodo>0){
+          printf("Ese curso por periodo está asociado a una reservacion, no se puede eliminar");
+          return;
+     }
+
+
+     PGresult *resCursoxPeriodo = PQexecParams(conn, stmCursoxperiodo, 4, NULL, paramValues, NULL, NULL, 0);   
+     if(PQresultStatus(resCursoxPeriodo)!= PGRES_COMMAND_OK){
+          printf("%s","Los datos brindados no coinsiden con ningún curso por periodo");
+     }else {
+          printf("%s","Curso por periodo eliminado con exito");          
+     }
+     endl;
+
+}
 void infoCursosxPeriodo(){
      int opcion;
      char repetir = TRUE;
@@ -608,7 +645,7 @@ void infoCursosxPeriodo(){
                 
                 break;
             case 3:
-               borrarProfes();
+               borrarCursoxPeriodo();
                 break;
             case 4: 
                repetir = FALSE;
@@ -621,8 +658,7 @@ void infoCursosxPeriodo(){
 }
 
 void stats(){
-     PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-     printf("Top 3 aulas más reservadas: ");
+          printf("Top 3 aulas más reservadas: ");
      endl;
      char * stm1 = 
      "SELECT a.nombre \"Nombre de aula\", count(ra.reservacionid) \"Cantidad de reservaciones\" "
@@ -714,8 +750,7 @@ int menu_operativo() {
 
 
 void consultaXdia() {
-       PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-
+       
         printf("Ingrese la fecha a consultar: ");
          char fecha[255];
         scanf(" %s",&fecha[0]);
@@ -739,13 +774,11 @@ void consultaXdia() {
             PQgetvalue(res, i, 7));
         }
 
-        PQfinish(conn);
-}
+        }
 
 void consultaXaula() {
 
-        PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-        printf("Ingrese el nombre del aula a consultar: ");
+                printf("Ingrese el nombre del aula a consultar: ");
 
         char nombreAula[255];
         scanf(" %s",&nombreAula[0]);
@@ -771,14 +804,12 @@ void consultaXaula() {
             PQgetvalue(res, i, 7));
         }
 
-        PQfinish(conn);
-        return;
+                return;
 }
 
 void consultaXcurso() {
 
-        PGconn *conn = PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
-        
+                
         printf("Ingrese el año a consultar: ");
         char annio[255];
         scanf("%s",&annio[0]);
@@ -817,8 +848,7 @@ void consultaXcurso() {
             PQgetvalue(res, i, 3), PQgetvalue(res, i, 4));
         }
 
-        PQfinish(conn);
-}
+        }
 
 void menuGeneral() {
     
