@@ -44,3 +44,9 @@ create table reservacionxaula  (
 	
 )
 
+INSERT INTO cursos (codigocurso,codigocarrera,nombre) VALUES ('300','IC','Lenguajes');
+INSERT INTO cursos (codigocurso,codigocarrera,nombre) VALUES ('421','IC','Bases');
+INSERT INTO cursos (codigocurso,codigocarrera,nombre) VALUES ('182','IC','Requerimientos');
+INSERT INTO cursos (codigocurso,codigocarrera,nombre) VALUES ('152','MA','Probabilidades');
+INSERT INTO cursos (codigocurso,codigocarrera,nombre) VALUES ('226','CL','Comunicacion');
+
