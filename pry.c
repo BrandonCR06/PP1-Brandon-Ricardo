@@ -1,3 +1,9 @@
+/**
+Lenguajes de programacion 
+@Ricardo Soto
+@Brandon Redondo
+Proyecto programado #1 
+*/   
 #include <stdio.h>
 #include <stdlib.h>
 #include "libpq-fe.h"
@@ -5,17 +11,16 @@
 #define FALSE 0
 #define endl printf("\n")
 
-//Prototipos de las funciones
-void menuPrincipal();
-void menuOperativo();
-void menuGeneral();
 
 //Funciones generales
 char * getString();
 
 //Funciones del submenu operativo
 void infoAulas();
+void menuPrincipal();
 
+
+//Struct para retornar una lista de strings con su respectivo tamaño
 struct cadena{
      char** lista;
      int tamanio;
@@ -23,7 +28,16 @@ struct cadena{
 PGconn *conn;
 
 
-
+/**
+Entradas: 
+Una cadena de caracteres
+--------------------------------
+Salidas:
+Numero entero con la cantidad de caracteres que cuenta la entrada
+--------------------------------
+Objetivo:
+Funciona para saber cuantos elementos tiene una cadena de caracteres
+*/
 int count(char car[] ){
       char* mem = car;
      int i =0;
@@ -33,6 +47,19 @@ int count(char car[] ){
      }
      return i;     
 }
+
+
+/**
+
+Entradas: 
+Una cadena de caracteres
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Imprime los elementos de una cadena de caracteres
+*/
 void imprime(char* car){
      char* mem = car;
      int i =0;
@@ -43,6 +70,18 @@ void imprime(char* car){
      //printf("%i",i);
 }
 
+
+/**
+
+Entradas: 
+Una cadena de caracteres, un argumento para realizar el split, la mayoría de veces una coma
+--------------------------------
+Salidas:
+Retorna una struct que contiene un arreglo de strings y el tamannio del mismo 
+--------------------------------
+Objetivo:
+Separa una cadena de caracteres por un argumento, en elementos de un arreglo .
+*/
 struct cadena split(char car[],char splitArg){
      int cont = 1;
      int i = 0;
@@ -92,7 +131,16 @@ int main(){
         return 0;
 }
 
-
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+Retorna una cadena de caracteres con el string ingresado por el usuario
+--------------------------------
+Objetivo:
+Utiliza el scanf para leer la entrada carater por caracter hasta leer el salto de línea
+*/
 char * getString(){
      char letra = ' ';     
      int i = 1; 
@@ -110,7 +158,16 @@ char * getString(){
      return str;
 }
 
-
+/**
+Entradas: 
+Dos cadenas de caracteres
+--------------------------------
+Salidas:
+Retorna una bandera, 1 si ambas son iguales, 0 de lo contrario
+--------------------------------
+Objetivo:
+Se utiliza para saber si dos cadenas son iguales.
+*/
 int compare(char* a, char* b ){
      char* cmp1 = a;
      char* cmp2 = b;
@@ -126,7 +183,17 @@ int compare(char* a, char* b ){
 
 
 
-
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Se utiliza para incluir a los profesores en la base de datos del sistema
+Se realiza la ejecucion de la consulta con parametros ingresados por el usuario
+*/
 void incluirProfes(){
      printf("Ingrese la cedula del profesor: ");
      char cedula[255];
@@ -145,12 +212,25 @@ void incluirProfes(){
      if (PQresultStatus(res) != PGRES_COMMAND_OK) {
                fprintf(stderr, " Error: %s\n",PQerrorMessage(conn));
 
-     }
-     
-               
-
+     } 
 }
-     
+
+
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Se utiliza para borrar a los profesores en la base de datos del sistema
+Se realiza la ejecucion de la consulta con parametros ingresados por el usuario
+--------------------------------
+Restricciones:
+El profesor no puede estar incluido en un curso por periodo, ni por ende en una reservacion de aula con ese curso
+*/   
 void borrarProfes(){
           printf("Ingrese la cedula del profesor a borrar: ");
      char cedula[255];
@@ -176,6 +256,20 @@ void borrarProfes(){
      
 }
 
+/**
+Entradas: 
+Una cadena de caracteres con la sentencia sql y un enetero con la cantidad de columnas que se solicita en la consulta
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Se utiliza para imprimir los valores de la consulta junto con los nombres de las columnas correspondientes.
+--------------------------------
+Restricciones:
+void
+*/   
+
 void imprimeQuery(char* stm ,int cantCol){
      PGconn *conn =PQconnectdb("dbname=prylg host=localhost user=postgres password=ricardo12345");
      PGresult *res = PQexec(conn, stm);    
@@ -195,6 +289,20 @@ void imprimeQuery(char* stm ,int cantCol){
      }    
      
 }
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Lista la información de los profesores mediante una consulta sencilla
+--------------------------------
+Restricciones:
+void
+*/   
 void listarProfes(){
           PGresult *res = PQexec(conn, "SELECT cedula,nombre FROM profesores");    
      int rows = PQntuples(res);
@@ -206,6 +314,20 @@ void listarProfes(){
      }    
      
 }
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Menu para poder manipular los datos de los profesores, incluye listar, eliminar e incluir.
+--------------------------------
+Restricciones:
+void
+*/   
 
 void infoProfes(){
      int opcion;
@@ -246,6 +368,20 @@ void infoProfes(){
 
 }
 
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Se utiliza para manipular la informacion de las aulas en el sistema, 
+el usuario ingresa la ruta del archivo con las aulas.
+--------------------------------
+Restricciones:
+void
+*/   
 void infoAulas() {
         
      printf("Ingrese la ruta del archivo: ");
@@ -300,7 +436,7 @@ void infoAulas() {
           char *stm = "Insert into aulas values ($1,$2)";     
           PGresult *res = PQexecParams(conn, stm, 2, NULL, paramValues, NULL, NULL, 0);    
           if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-                    fprintf(stderr, " Error: %s\n",PQerrorMessage(conn));
+                    //fprintf(stderr, " Error: %s\n",PQerrorMessage(conn));
 
           }
           PQclear(res);
@@ -308,18 +444,22 @@ void infoAulas() {
      }    
      
                     
-          
-        
+}
 
-    }
-
-        
-
-
-
-
-
-
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Se utiliza para borrar a los profesores en la base de datos del sistema
+Se realiza la ejecucion de la consulta con parametros ingresados por el usuario
+--------------------------------
+Restricciones:
+El profesor no puede estar incluido en un curso por periodo, ni por ende en una reservacion de aula con ese curso
+*/   
 void incluirCursosxPeriodo(){
      printf("Ingrese el codigo de curso: ");
      char codigo[255];
@@ -394,7 +534,20 @@ void incluirCursosxPeriodo(){
      }
      
 }
-// Permite realizar la reservación de aulas en el sistema 
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Permite realizar la reservacion de aulas incluyendo el curso por periodo
+--------------------------------
+Restricciones:
+La información del curso debe existir, al igual que el periodo y sus demás atributos.
+*/   
 void infoReservas(){
           printf( "\n   -==[Reservacion de aulas]==-");     
      printf( "\n Ingrese el codigo de curso: ");  
@@ -524,6 +677,21 @@ void infoReservas(){
      
      
 }
+
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Elimina una reservacion del sistema, con el identificador generado lo realiza
+--------------------------------
+Restricciones:
+void
+*/   
 void cancelacionReserva(){
 
           printf( "\n Ingrese el identificador de la reserva ");    
@@ -563,12 +731,40 @@ void cancelacionReserva(){
 
 }
 
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Lista todos los cursos por periodo que se encuentran en el sistema, utiliza la función imprimeQuery() 
+creada anteriormente
+--------------------------------
+Restricciones:
+void
+*/   
 void listarCursosxPeriodo(){
      char * stm = "Select codigocurso as \"Codigo de Curso\",periodo Periodo,annio \"Annio\",grupo \"Grupo\",profesores.nombre \"Nombre de profesor\",profesores.cedula \"Cedula del profesor\",cantestudiantes \"Cantidad de estudiantes\" from cursosxperiodo inner join profesores on profesores.cedula = cursosxperiodo.profesorid";    
      imprimeQuery(stm,7);     
 
 }
 
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Elimina un curso por periodo del sistema, solicita los atributos que poseen unicidad para realizarlo.
+--------------------------------
+Restricciones:
+La información del curso por periodo no puede estar asociada a una reservación para que pueda
+ser eliminada(periodo,annio,codigoCurso,grupo);
+*/   
 void borrarCursoxPeriodo(){
      printf("Ingrese el codigo de curso: ");
      char codigo[255];
@@ -618,6 +814,20 @@ void borrarCursoxPeriodo(){
      endl;
 
 }
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Menu para manipular la informacion de los cursos por periodo del sistema
+--------------------------------
+Restricciones:
+void
+*/   
 void infoCursosxPeriodo(){
      int opcion;
      char repetir = TRUE;
@@ -657,6 +867,20 @@ void infoCursosxPeriodo(){
 
 }
 
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Utiliza consultas sql para obtener las estadisticas solicitadas, utiliza
+la funcion imprimeQuery() creada anteriormente
+--------------------------------
+Restricciones:
+void
+*/   
 void stats(){
           printf("Top 3 aulas más reservadas: ");
      endl;
@@ -692,11 +916,44 @@ void stats(){
      endl;
 
 }
+
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Lista todos los cursos que se encuentran en el sistema, utiliza la función imprimeQuery() 
+creada anteriormente
+--------------------------------
+Restricciones:
+void
+*/   
 void infoCursos(){
      char * stm = "Select codigocarrera \"Codigo de Carrera\", codigocurso \"Codigo de Curso\", nombre \"Nombre del curso\""
      " from Cursos";
      imprimeQuery(stm,3);
 }
+
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+Numero entero igual a cero(sin relevancia)
+--------------------------------
+Objetivo:
+Menu para desplegar las diferentes opciones que posee el usuario para manipular la información 
+completa del sistema.
+--------------------------------
+Restricciones:
+void
+*/   
+
 int menu_operativo() {
     
     int opcion2;
@@ -748,7 +1005,20 @@ int menu_operativo() {
     
 }
 
-
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Recibe el valor de una fecha a consultar y realiza la consulta sql para saber cuales 
+fueron las consultas reservadas para ese dia
+--------------------------------
+Restricciones:
+void
+*/   
 void consultaXdia() {
        
         printf("Ingrese la fecha a consultar: ");
@@ -776,6 +1046,21 @@ void consultaXdia() {
 
         }
 
+
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Recibe el nombre del aula y devuelve la informacion impresa en consola de
+cuales son las fechas en donde esa aula está reservada.
+--------------------------------
+Restricciones:
+void
+*/   
 void consultaXaula() {
 
                 printf("Ingrese el nombre del aula a consultar: ");
@@ -806,7 +1091,20 @@ void consultaXaula() {
 
                 return;
 }
-
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+EL usuario ingresa la informacion de un curso por periodo y el 
+programa imprime las reservas de ese curso despues de realizar la consulta sql al motor de base de datos.
+--------------------------------
+Restricciones:
+void
+*/   
 void consultaXcurso() {
 
                 
@@ -849,7 +1147,19 @@ void consultaXcurso() {
         }
 
         }
-
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Menu general que tiene como opciones las consultas respectivas a la base de datos del sistema.
+--------------------------------
+Restricciones:
+void
+*/   
 void menuGeneral() {
     
     int opcion;
@@ -888,7 +1198,19 @@ void menuGeneral() {
 
 }
 
-
+/**
+Entradas: 
+void
+--------------------------------
+Salidas:
+void
+--------------------------------
+Objetivo:
+Menu principal del programa
+--------------------------------
+Restricciones:
+void
+*/   
 
 void menuPrincipal() {
         
